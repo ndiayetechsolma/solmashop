@@ -1,6 +1,6 @@
 # Solma Shop Business
 
-Prototype web de gestion pour les deux magasins Solma Shop Business.
+Prototype web de gestion pour les magasins Solma Shop Business.
 
 ## Lancer localement
 
