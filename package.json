@@ -1,0 +1,14 @@
+{
+  "name": "solma-shop-business",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "check": "node --check app.js && node --check auth.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.57.0",
+    "bcryptjs": "^3.0.3",
+    "jose": "^6.2.12"
+  }
+}

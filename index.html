@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#edf2ee" />
+  <title>Solma Shop Business</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <section class="auth-screen" id="auth-screen">
+    <div class="auth-card glass-card">
+      <div class="brand auth-brand"><div class="brand-mark">S</div><div><strong>Solma</strong><span>Shop Business</span></div></div>
+      <p class="eyebrow">Espace propriétaire</p>
+      <h1>Bienvenue dans votre espace.</h1>
+      <p class="subtle">Connectez-vous pour gérer vos deux magasins.</p>
+      <div class="auth-modes"><button type="button" class="auth-mode active" data-auth-mode="admin">Propriétaire</button><button type="button" class="auth-mode" data-auth-mode="personnel">Personnel</button></div>
+      <form id="admin-login-form" class="auth-form" autocomplete="off">
+        <div class="field admin-field"><label for="admin-email">Adresse email</label><input id="admin-email" type="email" autocomplete="email" required placeholder="vous@exemple.com" /></div>
+        <div class="field admin-field"><label for="admin-password">Mot de passe</label><input id="admin-password" type="password" autocomplete="current-password" required placeholder="Votre mot de passe" /></div>
+        <div class="field personnel-field hidden-field"><label for="personnel-phone">Numéro de téléphone</label><input id="personnel-phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="77 000 00 00" /></div>
+        <div class="field personnel-field hidden-field"><label for="personnel-pin">Code à 4 chiffres</label><input id="personnel-pin" type="password" inputmode="numeric" maxlength="4" placeholder="••••" /></div>
+        <p class="auth-error" id="auth-error" role="alert"></p>
+        <button class="btn btn-primary" type="submit" id="admin-login-button">Se connecter</button>
+      </form>
+    </div>
+  </section>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark">S</div>
+        <div>
+          <strong>Solma</strong>
+          <span>Shop Business</span>
+        </div>
+      </div>
+      <div class="profile-chip">
+        <div class="avatar">AM</div>
+        <div><strong id="profile-name">Compte propriétaire</strong><span id="profile-role">Administrateur</span></div>
+        <button class="icon-button" aria-label="Modifier le profil" data-action="edit-profile">•••</button>
+      </div>
+      <nav class="main-nav" aria-label="Navigation principale">
+        <p class="nav-label">Vue d’ensemble</p>
+        <button class="nav-item active" data-view="dashboard"><span class="nav-icon">◫</span> Tableau de bord</button>
+        <button class="nav-item" data-view="sales"><span class="nav-icon">↗</span> Ventes</button>
+        <button class="nav-item" data-view="cash"><span class="nav-icon">▣</span> Caisses</button>
+        <button class="nav-item" data-view="expenses"><span class="nav-icon">−</span> Dépenses</button>
+        <p class="nav-label management-label">Gestion</p>
+        <button class="nav-item" data-view="products"><span class="nav-icon">◇</span> Produits</button>
+        <button class="nav-item" data-view="team"><span class="nav-icon">♧</span> Personnel</button>
+        <button class="nav-item" data-view="reports"><span class="nav-icon">▥</span> Rapports</button>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="help-card"><span>Besoin d’aide ?</span><strong>Centre de ressources <span>↗</span></strong></div>
+        <button class="logout"><span>↪</span> Se déconnecter</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="header-navigation"><button class="mobile-menu icon-button" id="mobile-menu" aria-label="Ouvrir le menu">☰</button><button class="header-menu-button" id="header-menu-button" aria-expanded="false">Menu <span>⌄</span></button><div class="header-menu" id="header-menu"><button data-view-link="dashboard">Tableau de bord</button><button data-view-link="sales">Ventes</button><button data-view-link="cash">Caisses</button><button data-view-link="expenses">Dépenses</button><button data-view-link="collection">Collection</button><button data-view-link="products">Produits</button><button data-view-link="team">Personnel</button><button data-view-link="reports">Rapports</button></div></div>
+        <div class="breadcrumb"><span>Solma Shop</span><b>/</b><strong id="breadcrumb-current">Tableau de bord</strong></div>
+        <div class="topbar-actions">
+          <button class="btn btn-light header-quick-sale" data-action="new-sale">＋ Vente rapide</button>
+          <div class="store-selector"><span class="status-dot"></span><select id="store-filter"><option value="all">Tous les magasins</option><option value="plateau">Plateau</option><option value="medina">Médina</option></select><span>⌄</span></div>
+          <button class="icon-button notification" aria-label="Notifications">♢<i></i></button>
+          <div class="top-avatar" id="top-avatar">AD</div>
+        </div>
+      </header>
+
+      <div class="page-content" id="page-content"></div>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="auth.js?v=20260907-2"></script>
+  <script src="app.js?v=20260907-2"></script>
+  <script>
+    document.querySelector('#header-menu-button').addEventListener('click', () => document.querySelector('#header-menu').classList.toggle('open'));
+  </script>
+</body>
+</html>
