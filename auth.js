@@ -16,12 +16,20 @@
   window.solmaSupabase = client;
 
   document.querySelectorAll('[data-auth-mode]').forEach(button => button.addEventListener('click', () => {
-    authMode = button.dataset.authMode;
-    document.querySelectorAll('[data-auth-mode]').forEach(item => item.classList.toggle('active', item === button));
-    document.querySelectorAll('.admin-field').forEach(item => item.classList.toggle('hidden-field', authMode !== 'admin'));
-    document.querySelectorAll('.personnel-field').forEach(item => item.classList.toggle('hidden-field', authMode !== 'personnel'));
-    loginButton.textContent = authMode === 'admin' ? 'Se connecter' : 'Ouvrir ma session';
-  }));
+  authMode = button.dataset.authMode;
+  document.querySelectorAll('[data-auth-mode]').forEach(item => item.classList.toggle('active', item === button));
+  document.querySelectorAll('.admin-field').forEach(item => {
+    item.classList.toggle('hidden-field', authMode !== 'admin');
+    const input = item.querySelector('input');
+    if (input) input.required = authMode === 'admin';
+  });
+  document.querySelectorAll('.personnel-field').forEach(item => {
+    item.classList.toggle('hidden-field', authMode !== 'personnel');
+    const input = item.querySelector('input');
+    if (input) input.required = authMode === 'personnel';
+  });
+  loginButton.textContent = authMode === 'admin' ? 'Se connecter' : 'Ouvrir ma session';
+}));
 
   const showApp = () => {
     authScreen.classList.add('hidden');
@@ -67,11 +75,13 @@
       sessionStorage.removeItem('solma_personnel_session');
       ({ error: loginError } = await client.auth.signInWithPassword({ email: document.querySelector('#admin-email').value.trim(), password: document.querySelector('#admin-password').value }));
     } else {
+      const telephoneValue = document.querySelector('#personnel-phone').value.trim();
+      const pinValue = document.querySelector('#personnel-pin').value;
       await client.auth.signOut();
-      const result = await fetch('/api/personnel-login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ telephone: document.querySelector('#personnel-phone').value.trim(), pin: document.querySelector('#personnel-pin').value }) });
+      const result = await fetch('/api/personnel-login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ telephone: telephoneValue, pin: pinValue }) });
       if (result.ok) { const session = await result.json(); sessionStorage.setItem('solma_personnel_session', JSON.stringify(session)); window.solmaPersonnelSession = session; window.solmaAdminProfile = null; showApp(); }
       else loginError = new Error('Invalid personnel credentials');
-    }
+}
     if (loginError) error.textContent = 'Email ou mot de passe incorrect.';
     loginButton.disabled = false;
     loginButton.textContent = authMode === 'admin' ? 'Se connecter' : 'Ouvrir ma session';
