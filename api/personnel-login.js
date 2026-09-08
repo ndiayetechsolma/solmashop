@@ -14,11 +14,11 @@ export default async function handler(request, response) {
   const normalizedTelephone = normalizePhone(telephone);
   if (!normalizedTelephone || !/^\d{4}$/.test(String(pin || ''))) return response.status(400).json({ error: 'Telephone and 4-digit PIN are required' });
 
-  const { data: personnelRows, error } = await client.from('personnel').select('id, nom, role, magasin_id, code_pin_hash, telephone').eq('actif', true);
+  const { data: personnelRows, error } = await client.from('personnel').select('id, nom, role, magasin_id, code_pin_hash, telephone, magasins(nom)').eq('actif', true);
   const personnel = (personnelRows || []).find(row => normalizePhone(row.telephone) === normalizedTelephone);
   if (error || !personnel || !(await bcrypt.compare(String(pin), personnel.code_pin_hash))) return response.status(401).json({ error: 'Invalid credentials' });
 
   const token = await new SignJWT({ type: 'personnel', personnelId: personnel.id, magasinId: personnel.magasin_id, role: personnel.role })
     .setProtectedHeader({ alg: 'HS256' }).setSubject(personnel.id).setIssuedAt().setExpirationTime('12h').sign(secret);
-  return response.status(200).json({ token, personnel: { id: personnel.id, nom: personnel.nom, role: personnel.role, magasin_id: personnel.magasin_id } });
+  return response.status(200).json({ token, personnel: { id: personnel.id, nom: personnel.nom, role: personnel.role, magasin_id: personnel.magasin_id, magasin_nom: personnel.magasins?.nom || '' } });
 }

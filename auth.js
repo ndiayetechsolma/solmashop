@@ -38,8 +38,10 @@
     const profile = window.solmaPersonnelSession?.personnel || window.solmaAdminProfile;
     if (profile) {
       const name = profile.nom || profile.email || 'Compte propriétaire';
+      const roleLabel = profile.role === 'vendeur' ? 'Vendeur' : 'Administrateur';
+      const storeLabel = window.solmaPersonnelSession?.personnel?.magasin_nom;
       document.querySelector('#profile-name').textContent = name;
-      document.querySelector('#profile-role').textContent = profile.role === 'vendeur' ? 'Vendeur' : 'Administrateur';
+      document.querySelector('#profile-role').textContent = storeLabel ? `${roleLabel} · ${storeLabel}` : roleLabel;
       document.querySelector('#top-avatar').textContent = name.split(/\s+/).map(part => part[0]).join('').slice(0, 2).toUpperCase();
     }
     window.dispatchEvent(new CustomEvent('solma-auth-ready'));
@@ -81,7 +83,7 @@
       const result = await fetch('/api/personnel-login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ telephone: telephoneValue, pin: pinValue }) });
       if (result.ok) { const session = await result.json(); sessionStorage.setItem('solma_personnel_session', JSON.stringify(session)); window.solmaPersonnelSession = session; window.solmaAdminProfile = null; showApp(); }
       else loginError = new Error('Invalid personnel credentials');
-}
+    }
     if (loginError) error.textContent = 'Email ou mot de passe incorrect.';
     loginButton.disabled = false;
     loginButton.textContent = authMode === 'admin' ? 'Se connecter' : 'Ouvrir ma session';

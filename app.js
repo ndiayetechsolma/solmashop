@@ -16,14 +16,14 @@ const ICONS = {
 function icon(name, size = 16) { return `<span class="icon" style="width:${size}px;height:${size}px">${ICONS[name] || ''}</span>`; }
 const initialData = {
   sales: [
-    { product: 'Pack eau Kirène', amount: 2500, payment: 'liquide', seller: 'Fatou Diop', store: 'Plateau', time: 'Aujourd’hui, 14:32' },
-    { product: 'Sac de riz 5kg', amount: 7800, payment: 'mobile_money', seller: 'Moussa Fall', store: 'Médina', time: 'Aujourd’hui, 13:48' },
-    { product: 'Huile Dinor 1L', amount: 1450, payment: 'liquide', seller: 'Fatou Diop', store: 'Plateau', time: 'Aujourd’hui, 12:16' },
-    { product: 'Sucre en poudre', amount: 900, payment: 'mobile_money', seller: 'Awa Sarr', store: 'Médina', time: 'Aujourd’hui, 11:04' }
+    { product: 'Pack eau Kirène', amount: 2500, payment: 'liquide', seller: 'Fatou Diop', store: 'Solma Shop 1', time: 'Aujourd’hui, 14:32' },
+    { product: 'Sac de riz 5kg', amount: 7800, payment: 'mobile_money', seller: 'Moussa Fall', store: 'Solma Shop 2', time: 'Aujourd’hui, 13:48' },
+    { product: 'Huile Dinor 1L', amount: 1450, payment: 'liquide', seller: 'Fatou Diop', store: 'Solma Shop 1', time: 'Aujourd’hui, 12:16' },
+    { product: 'Sucre en poudre', amount: 900, payment: 'mobile_money', seller: 'Awa Sarr', store: 'Solma Shop 2', time: 'Aujourd’hui, 11:04' }
   ],
   expenses: [
-    { reason: 'Transport livraison', amount: 3500, addedBy: 'Moussa Fall', store: 'Médina', time: 'Aujourd’hui, 10:20' },
-    { reason: 'Petite monnaie', amount: 5000, addedBy: 'Fatou Diop', store: 'Plateau', time: 'Hier, 17:45' }
+    { reason: 'Transport livraison', amount: 3500, addedBy: 'Moussa Fall', store: 'Solma Shop 2', time: 'Aujourd’hui, 10:20' },
+    { reason: 'Petite monnaie', amount: 5000, addedBy: 'Fatou Diop', store: 'Solma Shop 1', time: 'Hier, 17:45' }
   ],
   products: [
     { name: 'Pack eau Kirène', price: 2500, category: 'Boissons' },
@@ -34,13 +34,13 @@ const initialData = {
     { name: 'Jus Kirène', price: 1200, category: 'Boissons' }
   ],
   team: [
-    { name: 'Fatou Diop', role: 'Vendeuse', phone: '77 123 45 67', store: 'Plateau', initials: 'FD' },
-    { name: 'Moussa Fall', role: 'Vendeur', phone: '76 987 65 43', store: 'Médina', initials: 'MF' },
-    { name: 'Awa Sarr', role: 'Vendeuse', phone: '78 456 12 30', store: 'Médina', initials: 'AS' }
+    { name: 'Fatou Diop', role: 'Vendeuse', phone: '77 123 45 67', store: 'Solma Shop 1', initials: 'FD' },
+    { name: 'Moussa Fall', role: 'Vendeur', phone: '76 987 65 43', store: 'Solma Shop 2', initials: 'MF' },
+    { name: 'Awa Sarr', role: 'Vendeuse', phone: '78 456 12 30', store: 'Solma Shop 2', initials: 'AS' }
   ],
   cash: [
-    { store: 'Plateau', opened: true, opening: 100000, expected: 126450, openedBy: 'Fatou Diop', openedAt: 'Aujourd’hui, 08:02' },
-    { store: 'Médina', opened: false, opening: 75000, expected: 94300, openedBy: 'Moussa Fall', openedAt: 'Hier, 08:17' }
+    { store: 'Solma Shop 1', opened: true, opening: 100000, expected: 126450, openedBy: 'Fatou Diop', openedAt: 'Aujourd’hui, 08:02' },
+    { store: 'Solma Shop 2', opened: false, opening: 75000, expected: 94300, openedBy: 'Moussa Fall', openedAt: 'Hier, 08:17' }
   ]
 };
 let data = { sales: [], expenses: [], products: [], team: [], cash: [] };
@@ -61,8 +61,14 @@ function showToast(message) { const toast = document.querySelector('#toast'); to
 function initials(name) { return name.split(' ').map(part => part[0]).join('').slice(0, 2).toUpperCase(); }
 function currentUserName() { return window.solmaPersonnelSession?.personnel?.nom || window.solmaAdminProfile?.name || window.solmaAdminProfile?.email || 'Administrateur'; }
 function pageTitle() { return { dashboard: 'Tableau de bord', sales: 'Ventes', cash: 'Caisses', expenses: 'Dépenses', collection: 'Collection', products: 'Produits', team: 'Personnel', reports: 'Rapports' }[currentView]; }
-function getFiltered(items) { const store = document.querySelector('#store-filter')?.value || 'all'; return store === 'all' ? items : items.filter(item => item.store.toLowerCase() === store || item.store.toLowerCase().includes(store)); }
+function getFiltered(items) {
+  if (window.solmaPersonnelSession) return items; // un vendeur ne voit toujours que son propre magasin, quel que soit le filtre laissé par une session admin
+  const store = document.querySelector('#store-filter')?.value || 'all';
+  return store === 'all' ? items : items.filter(item => item.store.toLowerCase() === store || item.store.toLowerCase().includes(store));
+}
 function isToday(timestamp) { if (!timestamp) return true; const date = new Date(timestamp); const today = new Date(); return date.getFullYear() === today.getFullYear() && date.getMonth() === today.getMonth() && date.getDate() === today.getDate(); }
+function isSameDay(dateA, dateB) { return dateA.getFullYear() === dateB.getFullYear() && dateA.getMonth() === dateB.getMonth() && dateA.getDate() === dateB.getDate(); }
+
 async function loadRemoteDataLegacy() {
   if (remoteDataLoaded || remoteDataLoading || window.solmaPersonnelSession || !window.solmaSupabase) return;
   remoteDataLoading = true;
@@ -81,11 +87,11 @@ async function loadRemoteDataLegacy() {
     if (firstError) throw new Error(firstError.message);
     stores = storesResult.data;
     const toTime = value => value ? new Date(value).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) : '';
-    data.sales = salesResult.data.map(item => ({ id: item.id, cancelled: item.annulee, product: item.nom_produit, amount: item.montant, payment: item.mode_paiement, seller: item.personnel?.nom || item.personnel_id || 'Personnel non identifié', store: item.magasins?.nom || 'Magasin', time: toTime(item.date_heure) }));
-    data.expenses = expensesResult.data.map(item => ({ id: item.id, reason: item.motif, amount: item.montant, addedBy: item.personnel?.nom || 'Administrateur', store: item.magasins?.nom || 'Magasin', time: toTime(item.date_heure) }));
+    data.sales = salesResult.data.map(item => ({ id: item.id, timestamp: item.date_heure, cancelled: item.annulee, product: item.nom_produit, amount: item.montant, payment: item.mode_paiement, seller: item.personnel?.nom || item.personnel_id || 'Personnel non identifié', store: item.magasins?.nom || 'Magasin', time: toTime(item.date_heure) }));
+    data.expenses = expensesResult.data.map(item => ({ id: item.id, timestamp: item.date_heure, reason: item.motif, amount: item.montant, addedBy: item.personnel?.nom || 'Administrateur', store: item.magasins?.nom || 'Magasin', time: toTime(item.date_heure) }));
     data.products = productsResult.data.map(item => ({ id: item.id, name: item.nom, price: item.prix, category: 'Produit' }));
     data.team = teamResult.data.map(item => ({ id: item.id, name: item.nom, role: item.role === 'admin' ? 'Administrateur' : 'Vendeur', phone: item.telephone, store: stores.find(store => store.id === item.magasin_id)?.nom || 'Magasin', initials: initials(item.nom) }));
-    data.cash = cashResult.data.reduce((stores, item) => { const store = item.magasins?.nom || 'Magasin'; if (!stores.some(entry => entry.store === store)) stores.push({ id: item.magasin_id, store, opened: !item.date_fermeture, opening: item.montant_ouverture, expected: item.montant_fermeture || item.montant_ouverture, openedBy: item.personnel?.nom || 'Personnel', openedAt: toTime(item.date_ouverture) }); return stores; }, []);
+    data.cash = cashResult.data.reduce((items, item) => { const store = item.magasins?.nom || 'Magasin'; if (!items.some(entry => entry.store === store)) { const opening = item.montant_ouverture; const isOpen = !item.date_fermeture; let expected; if (isOpen) { const since = new Date(item.date_ouverture); const cashSales = data.sales.filter(s => s.store === store && !s.cancelled && s.payment === 'liquide' && new Date(s.timestamp) >= since).reduce((sum, s) => sum + s.amount, 0); const exp = data.expenses.filter(e => e.store === store && new Date(e.timestamp) >= since).reduce((sum, e) => sum + e.amount, 0); expected = opening + cashSales - exp; } else { expected = item.montant_fermeture || opening; } items.push({ id: item.magasin_id, store, opened: isOpen, opening, expected, openedBy: item.personnel?.nom || 'Personnel', openedAt: toTime(item.date_ouverture) }); } return items; }, []);
     remoteDataLoaded = true;
   } catch (error) {
     remoteDataError = error.message || 'Erreur de connexion à Supabase';
@@ -111,7 +117,7 @@ async function loadRemoteData() {
     data.expenses = (payload.expenses || []).map(item => ({ id: item.id, timestamp: item.date_heure, reason: item.motif, amount: item.montant, addedBy: item.personnel?.nom || 'Administrateur', store: item.magasins?.nom || 'Magasin', time: toTime(item.date_heure) }));
     data.products = (payload.products || []).map(item => ({ id: item.id, name: item.nom, price: item.prix, category: 'Produit' }));
     data.team = (payload.personnel || []).map(item => ({ id: item.id, name: item.nom, role: item.role === 'admin' ? 'Administrateur' : 'Vendeur', phone: item.telephone, store: stores.find(store => store.id === item.magasin_id)?.nom || 'Magasin', initials: initials(item.nom) }));
-    data.cash = (payload.cash || []).reduce((items, item) => { const store = item.magasins?.nom || 'Magasin'; if (!items.some(entry => entry.store === store)) items.push({ id: item.magasin_id, store, opened: !item.date_fermeture, opening: item.montant_ouverture, expected: item.montant_fermeture || item.montant_ouverture, openedBy: item.personnel?.nom || 'Personnel', openedAt: toTime(item.date_ouverture) }); return items; }, []);
+    data.cash = (payload.cash || []).reduce((items, item) => { const store = item.magasins?.nom || 'Magasin'; if (!items.some(entry => entry.store === store)) { const opening = item.montant_ouverture; const isOpen = !item.date_fermeture; let expected; if (isOpen) { const since = new Date(item.date_ouverture); const cashSales = data.sales.filter(s => s.store === store && !s.cancelled && s.payment === 'liquide' && new Date(s.timestamp) >= since).reduce((sum, s) => sum + s.amount, 0); const exp = data.expenses.filter(e => e.store === store && new Date(e.timestamp) >= since).reduce((sum, e) => sum + e.amount, 0); expected = opening + cashSales - exp; } else { expected = item.montant_fermeture || opening; } items.push({ id: item.magasin_id, store, opened: isOpen, opening, expected, openedBy: item.personnel?.nom || 'Personnel', openedAt: toTime(item.date_ouverture) }); } return items; }, []);
     remoteDataLoaded = true;
   } catch (error) {
     remoteDataError = error.message || 'Erreur de connexion';
@@ -126,9 +132,34 @@ async function loadPersonnelTreasury() {
   const result = await fetch('/api/treasury', { headers: { Authorization: `Bearer ${token}` } });
   if (!result.ok) { showToast('Impossible de charger la trésorerie.'); return; }
   treasurySnapshot = await result.json();
+  data.sales = treasurySnapshot.salesList || [];
+  data.expenses = treasurySnapshot.expensesList || [];
   data.cash = treasurySnapshot.cash ? [{ store: treasurySnapshot.store, opened: treasurySnapshot.cash.open, opening: treasurySnapshot.cash.opening, expected: treasurySnapshot.cash.expected, openedBy: 'Session actuelle', openedAt: 'Aujourd’hui' }] : [];
   document.body.classList.add('seller-mode');
   render();
+}
+
+function buildTrendSvg(salesForChart) {
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - i);
+    days.push(d);
+  }
+  const totals = days.map(day => salesForChart.filter(sale => !sale.cancelled && isSameDay(new Date(sale.timestamp), day)).reduce((sum, sale) => sum + sale.amount, 0));
+  const maxValue = Math.max(...totals, 1);
+  const width = 700, topY = 30, bottomY = 195;
+  const points = totals.map((value, index) => {
+    const x = (width / (totals.length - 1)) * index;
+    const y = bottomY - (value / maxValue) * (bottomY - topY);
+    return { x, y, value, label: days[index].toLocaleDateString('fr-FR', { day: '2-digit', month: 'long' }) };
+  });
+  const linePath = points.map((point, index) => `${index === 0 ? 'M' : 'L'}${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(' ');
+  const areaPath = `${linePath} L${width} 200 L0 200Z`;
+  const lastPoint = points[points.length - 1];
+  const axisLabels = points.map(point => `<text class="axis-label" x="${point.x.toFixed(1)}" y="216">${point.label}</text>`).join('');
+  return `<svg class="chart" viewBox="0 0 700 220" preserveAspectRatio="none"><defs><linearGradient id="area" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#80bca0" stop-opacity=".30"/><stop offset="1" stop-color="#80bca0" stop-opacity="0"/></linearGradient></defs><line class="chart-grid" x1="0" y1="30" x2="700" y2="30"/><line class="chart-grid" x1="0" y1="87" x2="700" y2="87"/><line class="chart-grid" x1="0" y1="144" x2="700" y2="144"/><path class="chart-area" d="${areaPath}"/><path class="chart-line" d="${linePath}"/><circle class="chart-dot" cx="${lastPoint.x.toFixed(1)}" cy="${lastPoint.y.toFixed(1)}" r="5"/>${axisLabels}</svg>`;
 }
 
 function dashboardView() {
@@ -138,31 +169,72 @@ function dashboardView() {
   const todaySales = sales.filter(sale => isToday(sale.timestamp));
   const todayExpenses = getFiltered(data.expenses).filter(expense => isToday(expense.timestamp));
   const totalSales = treasurySnapshot?.salesTotal ?? todaySales.reduce((sum, sale) => sum + sale.amount, 0);
-  const totalExpenses = treasurySnapshot?.expenses ?? todayExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const totalExpenses = treasurySnapshot?.expensesTotal ?? todayExpenses.reduce((sum, expense) => sum + expense.amount, 0);
   const cashSales = treasurySnapshot?.cashSales ?? sales.filter(sale => sale.payment === 'liquide').reduce((sum, sale) => sum + sale.amount, 0);
   const transactionCount = treasurySnapshot?.transactions ?? todaySales.length;
-  const cashExpected = treasurySnapshot?.cash?.expected ?? cashSales + 175000;
-  return `<div class="page-heading"><div><p class="eyebrow">Lundi 12 juin 2024</p><h1>Bonjour ${escapeHtml(currentUserName())}</h1><p class="subtle">Voici ce qui se passe dans vos magasins aujourd’hui.</p></div><button class="btn btn-primary" data-action="new-sale">${icon('plus', 14)} Nouvelle vente</button></div>
+  const cashExpected = treasurySnapshot?.cash?.expected ?? data.cash.filter(c => c.opened).reduce((sum, c) => sum + (c.expected || 0), 0);
+
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayTotal = sales.filter(sale => !sale.cancelled && isSameDay(new Date(sale.timestamp), yesterday)).reduce((sum, sale) => sum + sale.amount, 0);
+  let trendLabel;
+  if (yesterdayTotal > 0) {
+    const pct = ((totalSales - yesterdayTotal) / yesterdayTotal) * 100;
+    trendLabel = `${pct >= 0 ? '+' : ''}${pct.toFixed(1).replace('.', ',')}%`;
+  } else if (totalSales > 0) {
+    trendLabel = 'Nouveau';
+  } else {
+    trendLabel = '—';
+  }
+
+  const todayLabel = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const todayLabelCapitalized = todayLabel.charAt(0).toUpperCase() + todayLabel.slice(1);
+
+  return `<div class="page-heading"><div><p class="eyebrow">${todayLabelCapitalized}</p><h1>Bonjour ${escapeHtml(currentUserName())}</h1><p class="subtle">Voici ce qui se passe dans vos magasins aujourd’hui.</p></div><button class="btn btn-primary" data-action="new-sale">${icon('plus', 14)} Nouvelle vente</button></div>
   <section class="stats-grid">
-    <article class="glass-card stat-card"><div class="stat-top"><span>Ventes du jour</span><span class="stat-symbol">${icon('trendingUp')}</span></div><h2>${money(totalSales)}</h2><div class="stat-foot"><b>+12,8%</b> vs. hier</div></article>
+    <article class="glass-card stat-card"><div class="stat-top"><span>Ventes du jour</span><span class="stat-symbol">${icon('trendingUp')}</span></div><h2>${money(totalSales)}</h2><div class="stat-foot ${yesterdayTotal > 0 ? '' : 'neutral'}"><b>${trendLabel}</b> vs. hier</div></article>
     <article class="glass-card stat-card"><div class="stat-top"><span>Transactions</span><span class="stat-symbol">${icon('activity')}</span></div><h2>${transactionCount}</h2><div class="stat-foot neutral">Depuis l’ouverture du jour</div></article>
-    <article class="glass-card stat-card"><div class="stat-top"><span>Dépenses du jour</span><span class="stat-symbol">${icon('trendingDown')}</span></div><h2>${money(totalExpenses)}</h2><div class="stat-foot neutral">2 dépenses enregistrées</div></article>
+    <article class="glass-card stat-card"><div class="stat-top"><span>Dépenses du jour</span><span class="stat-symbol">${icon('trendingDown')}</span></div><h2>${money(totalExpenses)}</h2><div class="stat-foot neutral">${todayExpenses.length} dépense${todayExpenses.length > 1 ? 's' : ''} enregistrée${todayExpenses.length > 1 ? 's' : ''}</div></article>
     <article class="glass-card stat-card"><div class="stat-top"><span>${treasurySnapshot ? 'Trésorerie attendue' : 'Solde en caisse'}</span><span class="stat-symbol">${icon('wallet')}</span></div><h2>${money(cashExpected)}</h2><div class="stat-foot ${treasurySnapshot?.cash?.open ? '' : 'neutral'}">${treasurySnapshot?.cash?.open ? 'Caisse ouverte' : 'Caisse non ouverte'}</div></article>
   </section>
-  <section class="content-grid"><article class="glass-card panel"><div class="panel-header"><div><h3>Performance des ventes</h3><p>Chiffre d’affaires des 7 derniers jours</p></div><button class="text-link" data-view-link="reports">Voir le rapport ↗</button></div><div class="chart-wrap"><svg class="chart" viewBox="0 0 700 220" preserveAspectRatio="none"><defs><linearGradient id="area" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#80bca0" stop-opacity=".30"/><stop offset="1" stop-color="#80bca0" stop-opacity="0"/></linearGradient></defs><line class="chart-grid" x1="0" y1="30" x2="700" y2="30"/><line class="chart-grid" x1="0" y1="87" x2="700" y2="87"/><line class="chart-grid" x1="0" y1="144" x2="700" y2="144"/><path class="chart-area" d="M0 169 C45 157, 69 137, 100 150 S158 150, 200 119 S260 138, 300 115 S354 87, 397 104 S440 128, 480 91 S543 109, 580 65 S630 100, 700 49 L700 200 L0 200Z"/><path class="chart-line" d="M0 169 C45 157, 69 137, 100 150 S158 150, 200 119 S260 138, 300 115 S354 87, 397 104 S440 128, 480 91 S543 109, 580 65 S630 100, 700 49"/><circle class="chart-dot" cx="580" cy="65" r="5"/><text class="axis-label" x="0" y="216">06 juin</text><text class="axis-label" x="112" y="216">07 juin</text><text class="axis-label" x="225" y="216">08 juin</text><text class="axis-label" x="337" y="216">09 juin</text><text class="axis-label" x="450" y="216">10 juin</text><text class="axis-label" x="562" y="216">11 juin</text><text class="axis-label" x="660" y="216">12 juin</text></svg></div><div class="legend"><span><i></i> Total des ventes</span><span><i class="secondary"></i> Période précédente</span></div></article>
-  <article class="glass-card panel"><div class="panel-header"><div><h3>État des caisses</h3><p>Suivi en temps réel</p></div><button class="text-link" data-view-link="cash">Tout voir</button></div><div class="cash-list">${data.cash.map(cash => `<div class="cash-item"><div class="store-icon">${icon('store', 18)}</div><div class="cash-info"><strong>${cash.store}</strong><span>${cash.opened ? 'Ouverte à ' + cash.openedAt.split(', ')[1] : 'Fermée hier à 19:06'}</span></div><div class="cash-amount"><strong>${money(cash.expected)}</strong><span class="${cash.opened ? '' : 'closed'}">${cash.opened ? 'En cours' : 'Fermée'}</span></div><div class="cash-progress"><i class="${cash.opened ? '' : 'closed'}"></i></div></div>`).join('')}</div></article></section>
+  <section class="content-grid"><article class="glass-card panel"><div class="panel-header"><div><h3>Performance des ventes</h3><p>Chiffre d’affaires des 7 derniers jours</p></div><button class="text-link" data-view-link="reports">Voir le rapport ↗</button></div><div class="chart-wrap">${buildTrendSvg(sales)}</div><div class="legend"><span><i></i> Total des ventes</span></div></article>
+  <article class="glass-card panel"><div class="panel-header"><div><h3>État des caisses</h3><p>Suivi en temps réel</p></div><button class="text-link" data-view-link="cash">Tout voir</button></div><div class="cash-list">${data.cash.map(cash => `<div class="cash-item"><div class="store-icon">${icon('store', 18)}</div><div class="cash-info"><strong>${cash.store}</strong><span>${cash.opened ? 'Ouverte à ' + cash.openedAt.split(', ')[1] : 'Fermée'}</span></div><div class="cash-amount"><strong>${money(cash.expected)}</strong><span class="${cash.opened ? '' : 'closed'}">${cash.opened ? 'En cours' : 'Fermée'}</span></div><div class="cash-progress"><i class="${cash.opened ? '' : 'closed'}"></i></div></div>`).join('')}</div></article></section>
   <section class="glass-card panel activity-panel"><div class="panel-header"><div><h3>Dernières transactions</h3><p>Les ventes les plus récentes de vos magasins</p></div><button class="text-link" data-view-link="sales">Voir toutes les ventes ↗</button></div>${salesTable(sales.slice(0, 4))}</section>`;
 }
 function salesTable(sales) { const admin = !window.solmaPersonnelSession; return `<div class="table-wrap"><table class="data-table"><thead><tr><th>Produit</th><th>Vendeur</th><th>Magasin</th><th>Paiement</th><th>Montant</th><th>Date et heure</th>${admin ? '<th>Action</th>' : ''}</tr></thead><tbody>${sales.map((sale, index) => `<tr class="${sale.cancelled ? 'cancelled-row' : ''}"><td><strong>${escapeHtml(sale.product)}</strong></td><td><div class="person"><span class="person-avatar">${initials(sale.seller)}</span>${escapeHtml(sale.seller)}</div></td><td class="muted">${escapeHtml(sale.store)}</td><td><span class="badge ${sale.payment === 'liquide' ? 'badge-cash' : 'badge-money'}">${sale.payment === 'liquide' ? 'Liquide' : 'Mobile money'}</span></td><td><strong>${money(sale.amount)}</strong></td><td class="muted">${escapeHtml(sale.time)}${sale.cancelled ? ' · Annulée' : ''}</td>${admin ? `<td>${sale.cancelled ? '<span class="muted">Annulée</span>' : `<button class="text-link danger-link" data-cancel-sale="${sale.id || ''}" data-cancel-local="${index}">Annuler</button>`}</td>` : ''}</tr>`).join('')}</tbody></table></div>`; }
 function genericHeader(title, subtitle, action, actionLabel) { return `<div class="page-heading"><div><p class="eyebrow">Gestion opérationnelle</p><h1>${title}</h1><p class="subtle">${subtitle}</p></div>${action ? `<button class="btn btn-primary" data-action="${action}">${icon('plus', 14)} ${actionLabel}</button>` : ''}</div>`; }
 function salesView() { return genericHeader('Ventes', 'Toutes les ventes enregistrées dans vos magasins.', 'new-sale', 'Nouvelle vente') + `<section class="glass-card view-card"><div class="filters"><select class="filter-input"><option>Cette semaine</option><option>Aujourd’hui</option><option>Ce mois</option></select><select class="filter-input"><option>Tous les moyens de paiement</option><option>Liquide</option><option>Mobile money</option></select><button class="btn btn-light">Exporter CSV ↗</button></div>${salesTable(getFiltered(data.sales))}</section>`; }
 function expensesView() { return genericHeader('Dépenses', 'Gardez une trace claire des sorties de chaque magasin.', 'new-expense', 'Ajouter une dépense') + `<section class="glass-card view-card">${data.expenses.length ? `<div class="table-wrap"><table class="data-table"><thead><tr><th>Motif</th><th>Ajoutée par</th><th>Magasin</th><th>Montant</th><th>Date</th></tr></thead><tbody>${getFiltered(data.expenses).map(item => `<tr><td><strong>${escapeHtml(item.reason)}</strong></td><td>${escapeHtml(item.addedBy)}</td><td class="muted">${item.store}</td><td class="negative"><strong>− ${money(item.amount)}</strong></td><td class="muted">${item.time}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty-state"><strong>Aucune dépense</strong>Les dépenses ajoutées apparaîtront ici.</div>'}</section>`; }
-function cashView() { return genericHeader('Caisses', 'Ouvertures, fermetures et écarts de caisse.', null, '') + `<section class="cash-list">${data.cash.map(cash => `<article class="glass-card view-card"><div class="panel-header"><div><h3>Caisse ${escapeHtml(cash.store)}</h3><p>${cash.opened ? 'Ouverte' : 'Fermée'} · ${escapeHtml(cash.openedBy || 'Historique')}</p></div><span class="badge ${cash.opened ? 'badge-money' : 'badge-cash'}">${cash.opened ? 'En cours' : 'Fermée'}</span></div><div class="form-grid"><div><span class="muted">Montant d’ouverture</span><h3>${money(cash.opening)}</h3></div><div><span class="muted">Montant attendu</span><h3>${money(cash.expected)}</h3></div></div><div class="form-actions"><button class="btn ${cash.opened ? 'btn-danger' : 'btn-primary'}" data-action="${cash.opened ? 'close-cash' : 'open-cash'}" data-store="${escapeHtml(cash.store)}">${cash.opened ? 'Fermer la caisse' : 'Ouvrir la caisse'}</button></div></article>`).join('')}</section>`; }
+function cashView() {
+  let items;
+  if (stores.length) {
+    items = stores.map(store => {
+      const cash = data.cash.find(c => c.store === store.nom) || {};
+      return { id: store.id, store: store.nom, opened: cash.opened || false, opening: cash.opening || 0, expected: cash.expected || 0, openedBy: cash.openedBy || null, openedAt: cash.openedAt || null };
+    });
+  } else {
+    items = data.cash;
+  }
+  return genericHeader('Caisses', 'Ouvertures, fermetures et écarts de caisse.', null, '') + (items.length ? `<section class="cash-list">${items.map(cash => `<article class="glass-card view-card"><div class="panel-header"><div><h3>Caisse ${escapeHtml(cash.store)}</h3><p>${cash.opened ? 'Ouverte' : 'Fermée'}${cash.openedBy ? ' · ' + escapeHtml(cash.openedBy) : ''}</p></div><span class="badge ${cash.opened ? 'badge-money' : 'badge-cash'}">${cash.opened ? 'En cours' : 'Fermée'}</span></div><div class="form-grid"><div><span class="muted">Montant d'ouverture</span><h3>${money(cash.opening)}</h3></div><div><span class="muted">Montant attendu</span><h3>${money(cash.expected)}</h3></div></div><div class="form-actions"><button class="btn ${cash.opened ? 'btn-danger' : 'btn-primary'}" data-action="${cash.opened ? 'close-cash' : 'open-cash'}" data-store="${escapeHtml(cash.store)}">${cash.opened ? 'Fermer la caisse' : 'Ouvrir la caisse'}</button></div></article>`).join('')}</section>` : `<section class="glass-card view-card"><div class="empty-state"><strong>Aucune caisse enregistrée</strong><span>Ouvrez une caisse pour commencer le suivi du jour.</span></div></section>`);
+}
 function productsView() { return genericHeader('Produits', 'Votre catalogue de vente rapide, sans gestion de stock.', 'new-product', 'Nouveau produit') + `<section class="glass-card view-card">${data.productsTable ? '' : `<div class="table-wrap"><table class="data-table"><thead><tr><th>Produit</th><th>Catégorie</th><th>Prix de vente</th><th></th></tr></thead><tbody>${data.products.map((product, index) => `<tr><td><strong>${escapeHtml(product.name)}</strong></td><td class="muted">${product.category}</td><td><strong>${money(product.price)}</strong></td><td><button class="text-link" data-remove-product="${index}">Supprimer</button></td></tr>`).join('')}</tbody></table></div>`}</section>`; }
 function collectionView() { return genericHeader('Collection', 'Catalogue disponible pour préparer rapidement une vente.', null, '') + `<section class="glass-card view-card"><div class="product-collection">${data.products.map(product => `<button class="product-pick" data-collection-product="${escapeHtml(product.name)}"><strong>${escapeHtml(product.name)}</strong><span>${money(product.price)}</span></button>`).join('')}</div></section>`; }
 function teamView() { return genericHeader('Personnel', 'Les personnes autorisées à enregistrer des opérations.', 'new-team', 'Ajouter une personne') + `<section class="glass-card view-card"><div class="table-wrap"><table class="data-table"><thead><tr><th>Nom</th><th>Rôle</th><th>Téléphone</th><th>Magasin</th><th>Accès</th><th></th></tr></thead><tbody>${data.team.map(member => `<tr><td><div class="person"><span class="person-avatar">${member.initials}</span><strong>${escapeHtml(member.name)}</strong></div></td><td class="muted">${member.role}</td><td>${escapeHtml(member.phone)}</td><td class="muted">${member.store}</td><td><span class="badge badge-money">Actif</span></td><td><button class="text-link danger-link" data-deactivate-personnel="${member.id}">Désactiver</button></td></tr>`).join('')}</tbody></table></div></section>`; }
-function reportsView() { return genericHeader('Rapports', 'Analysez les résultats par période, magasin ou vendeur.', null, '') + `<section class="stats-grid"><article class="glass-card stat-card"><div class="stat-top"><span>Ticket moyen</span><span class="stat-symbol">${icon('receipt')}</span></div><h2>${money(3162)}</h2><div class="stat-foot"><b>+6,2%</b> ce mois</div></article><article class="glass-card stat-card"><div class="stat-top"><span>Liquide</span><span class="stat-symbol">${icon('banknote')}</span></div><h2>61%</h2><div class="stat-foot neutral">des paiements</div></article><article class="glass-card stat-card"><div class="stat-top"><span>Meilleur magasin</span><span class="stat-symbol">${icon('trophy')}</span></div><h2>Plateau</h2><div class="stat-foot"><b>+18,4%</b> vs. Médina</div></article><article class="glass-card stat-card"><div class="stat-top"><span>Écart caisse</span><span class="stat-symbol">${icon('scale')}</span></div><h2 class="positive">+ 0 FCFA</h2><div class="stat-foot neutral">Sur les 7 derniers jours</div></article></section><section class="glass-card panel"><div class="panel-header"><div><h3>Résumé des performances</h3><p>Comparaison par magasin</p></div><select class="filter-input"><option>Ce mois</option><option>Cette semaine</option></select></div>${salesTable(data.sales)}</section>`; }
-
+function reportsView() {
+  const sales = getFiltered(data.sales).filter(sale => !sale.cancelled);
+  const totalSales = sales.reduce((sum, sale) => sum + sale.amount, 0);
+  const transactionCount = sales.length;
+  const ticketMoyen = transactionCount ? Math.round(totalSales / transactionCount) : 0;
+  const cashSales = sales.filter(sale => sale.payment === 'liquide').reduce((sum, sale) => sum + sale.amount, 0);
+  const liquidePct = totalSales ? Math.round(cashSales / totalSales * 100) : 0;
+  const storeTotals = {};
+  sales.forEach(sale => { storeTotals[sale.store] = (storeTotals[sale.store] || 0) + sale.amount; });
+  const storeEntries = Object.entries(storeTotals).sort((a, b) => b[1] - a[1]);
+  const bestStoreName = storeEntries.length ? storeEntries[0][0] : '—';
+  const bestStoreTotal = storeEntries.length ? storeEntries[0][1] : 0;
+  const secondStoreTotal = storeEntries.length > 1 ? storeEntries[1][1] : 0;
+  const ecartCash = data.cash.reduce((sum, cash) => sum + ((cash.expected || 0) - (cash.opening || 0)), 0);
+  return genericHeader('Rapports', 'Analysez les résultats par période, magasin ou vendeur.', null, '') + `<section class="stats-grid"><article class="glass-card stat-card"><div class="stat-top"><span>Ticket moyen</span><span class="stat-symbol">${icon('receipt')}</span></div><h2>${money(ticketMoyen)}</h2><div class="stat-foot neutral">Sur ${transactionCount} transaction${transactionCount > 1 ? 's' : ''}</div></article><article class="glass-card stat-card"><div class="stat-top"><span>Liquide</span><span class="stat-symbol">${icon('banknote')}</span></div><h2>${liquidePct}%</h2><div class="stat-foot neutral">des paiements</div></article><article class="glass-card stat-card"><div class="stat-top"><span>Meilleur magasin</span><span class="stat-symbol">${icon('trophy')}</span></div><h2>${escapeHtml(bestStoreName)}</h2><div class="stat-foot">${storeEntries.length > 1 ? `<b>+${Math.round((bestStoreTotal - secondStoreTotal) / Math.max(secondStoreTotal, 1) * 100)}%</b> vs. ${escapeHtml(storeEntries[1][0])}` : '<span class="muted">Données insuffisantes</span>'}</div></article><article class="glass-card stat-card"><div class="stat-top"><span>Écart caisse</span><span class="stat-symbol">${icon('scale')}</span></div><h2 class="${ecartCash >= 0 ? 'positive' : 'negative'}">${ecartCash >= 0 ? '+ ' : '− '}${money(Math.abs(ecartCash))}</h2><div class="stat-foot neutral">Variation de trésorerie</div></article></section><section class="glass-card panel"><div class="panel-header"><div><h3>Résumé des performances</h3><p>Comparaison par magasin</p></div><select class="filter-input"><option>Ce mois</option><option>Cette semaine</option></select></div>${salesTable(data.sales)}</section>`;
+}
 function render() { const views = { dashboard: dashboardView, sales: salesView, cash: cashView, expenses: expensesView, collection: collectionView, products: productsView, team: teamView, reports: reportsView }; page.innerHTML = views[currentView](); document.querySelector('#breadcrumb-current').textContent = pageTitle(); document.querySelectorAll('.nav-item').forEach(item => item.classList.toggle('active', item.dataset.view === currentView)); bindViewEvents(); }
 function openModal(type) { const modal = document.createElement('div'); modal.className = 'modal-backdrop'; let title = 'Nouvelle entrée'; let fields = ''; const storeOptions = stores.map(store => `<option value="${store.id}">${escapeHtml(store.nom)}</option>`).join(''); if (type === 'sale') { title = 'Enregistrer une vente'; fields = `<div class="field"><label>Produit</label><input id="modal-product" placeholder="Nom du produit" value="${selectedProduct?.name || ''}" /></div><div class="field"><label>Montant (FCFA)</label><input id="modal-amount" type="number" placeholder="0" value="${selectedProduct?.price || ''}" /></div><div class="field"><label>Magasin</label><select id="modal-store">${storeOptions}</select></div><div class="field"><label>Mode de paiement</label><select id="modal-payment"><option value="liquide">Liquide</option><option value="mobile_money">Mobile money</option></select></div>`; } else if (type === 'expense') { title = 'Ajouter une dépense'; fields = `<div class="field"><label>Motif</label><input id="modal-reason" placeholder="Ex. Transport livraison" /></div><div class="field"><label>Montant (FCFA)</label><input id="modal-amount" type="number" placeholder="0" /></div><div class="field"><label>Magasin</label><select id="modal-store">${storeOptions}</select></div>`; } else if (type === 'product') { title = 'Ajouter un produit'; fields = `<div class="field"><label>Nom du produit</label><input id="modal-product" placeholder="Ex. Biscuit" /></div><div class="field"><label>Prix de vente (FCFA)</label><input id="modal-amount" type="number" placeholder="0" /></div><div class="field"><label>Magasin</label><select id="modal-store">${storeOptions}</select></div>`; } else { title = 'Ajouter une personne'; fields = `<div class="field"><label>Nom complet</label><input id="modal-name" placeholder="Nom et prénom" /></div><div class="field"><label>Téléphone</label><input id="modal-phone" placeholder="77 000 00 00" /></div><div class="field"><label>Magasin</label><select id="modal-store">${storeOptions}</select></div><div class="field"><label>Code à 4 chiffres</label><input id="modal-pin" type="password" maxlength="4" placeholder="••••" /></div>`; }
   modal.innerHTML = `<div class="modal glass-card"><button class="modal-close" aria-label="Fermer">${icon('close', 16)}</button><p class="eyebrow">Solma Shop Business</p><h2>${title}</h2><p class="subtle">Les informations sont enregistrées immédiatement dans cette caisse.</p><div class="form-grid modal-fields">${fields}</div><div class="form-actions"><button class="btn btn-light modal-cancel">Annuler</button><button class="btn btn-primary modal-save">Enregistrer</button></div></div>`; document.body.appendChild(modal); modal.querySelector('.modal-close').onclick = () => modal.remove(); modal.querySelector('.modal-cancel').onclick = () => modal.remove(); modal.querySelector('.modal-save').onclick = () => saveModalDeprecated(type, modal); }

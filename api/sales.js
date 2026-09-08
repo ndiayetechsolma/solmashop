@@ -23,6 +23,7 @@ export default async function handler(request, response) {
   const { data: userData } = await adminClient.auth.getUser(accessToken);
   let authenticatedPersonnelId = personnel_id;
   let authenticatedStoreId = magasin_id;
+  let isAdmin = false;
   if (!userData.user) {
     if (!process.env.PERSONNEL_SESSION_SECRET) return response.status(401).json({ error: 'Invalid session' });
     try {
@@ -36,9 +37,15 @@ export default async function handler(request, response) {
   } else {
     const { data: admin } = await adminClient.from('admins').select('id').eq('id', userData.user.id).maybeSingle();
     if (!admin) return response.status(403).json({ error: 'Admin access required' });
+    isAdmin = true;
   }
-  const { data: personnel } = await adminClient.from('personnel').select('id').eq('id', authenticatedPersonnelId).eq('magasin_id', authenticatedStoreId).eq('actif', true).maybeSingle();
-  if (!personnel) return response.status(400).json({ error: 'Active personnel not found for this store' });
+
+  let personnelQuery = adminClient.from('personnel').select('id').eq('id', authenticatedPersonnelId).eq('actif', true);
+  if (!isAdmin) {
+    personnelQuery = personnelQuery.eq('magasin_id', authenticatedStoreId);
+  }
+  const { data: personnel } = await personnelQuery.maybeSingle();
+  if (!personnel) return response.status(400).json({ error: 'Active personnel not found' });
 
   const { data: sale, error: saleError } = await adminClient.from('ventes').insert({
     nom_produit,
