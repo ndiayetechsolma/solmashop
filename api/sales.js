@@ -15,8 +15,8 @@ export default async function handler(request, response) {
   const accessToken = authorization.startsWith('Bearer ') ? authorization.slice(7) : '';
   if (!accessToken) return response.status(401).json({ error: 'Authentication required' });
 
-  const { nom_produit, montant, mode_paiement, magasin_id, personnel_id, produit_id = null } = request.body || {};
-  if (!nom_produit || !Number.isInteger(montant) || montant <= 0 || !['liquide', 'mobile_money'].includes(mode_paiement) || !magasin_id || !personnel_id) {
+  const { nom_produit, montant, mode_paiement, magasin_id, personnel_id = null, produit_id = null } = request.body || {};
+  if (!nom_produit || !Number.isInteger(montant) || montant <= 0 || !['liquide', 'mobile_money'].includes(mode_paiement) || !magasin_id) {
     return response.status(400).json({ error: 'Invalid sale data' });
   }
 
@@ -24,6 +24,7 @@ export default async function handler(request, response) {
   let authenticatedPersonnelId = personnel_id;
   let authenticatedStoreId = magasin_id;
   let isAdmin = false;
+  let adminName = null;
   if (!userData.user) {
     if (!process.env.PERSONNEL_SESSION_SECRET) return response.status(401).json({ error: 'Invalid session' });
     try {
@@ -34,18 +35,20 @@ export default async function handler(request, response) {
     } catch {
       return response.status(401).json({ error: 'Invalid session' });
     }
+    if (!authenticatedPersonnelId) return response.status(400).json({ error: 'Invalid sale data' });
   } else {
     const { data: admin } = await adminClient.from('admins').select('id').eq('id', userData.user.id).maybeSingle();
     if (!admin) return response.status(403).json({ error: 'Admin access required' });
     isAdmin = true;
+    adminName = userData.user.user_metadata?.full_name || userData.user.email;
   }
 
-  let personnelQuery = adminClient.from('personnel').select('id').eq('id', authenticatedPersonnelId).eq('actif', true);
-  if (!isAdmin) {
-    personnelQuery = personnelQuery.eq('magasin_id', authenticatedStoreId);
+  if (!isAdmin || authenticatedPersonnelId) {
+    let personnelQuery = adminClient.from('personnel').select('id').eq('id', authenticatedPersonnelId).eq('actif', true);
+    if (!isAdmin) personnelQuery = personnelQuery.eq('magasin_id', authenticatedStoreId);
+    const { data: personnel } = await personnelQuery.maybeSingle();
+    if (!personnel) return response.status(400).json({ error: 'Active personnel not found' });
   }
-  const { data: personnel } = await personnelQuery.maybeSingle();
-  if (!personnel) return response.status(400).json({ error: 'Active personnel not found' });
 
   const { data: sale, error: saleError } = await adminClient.from('ventes').insert({
     nom_produit,
@@ -53,7 +56,8 @@ export default async function handler(request, response) {
     mode_paiement,
     magasin_id: authenticatedStoreId,
     produit_id,
-    personnel_id: authenticatedPersonnelId
+    personnel_id: isAdmin ? (authenticatedPersonnelId || null) : authenticatedPersonnelId,
+    admin_nom: isAdmin && !authenticatedPersonnelId ? adminName : null
   }).select().single();
 
   if (saleError) return response.status(400).json({ error: saleError.message });

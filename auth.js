@@ -37,12 +37,14 @@
     document.body.classList.toggle('seller-mode', Boolean(window.solmaPersonnelSession?.token));
     const profile = window.solmaPersonnelSession?.personnel || window.solmaAdminProfile;
     if (profile) {
-      const name = profile.nom || profile.email || 'Compte propriétaire';
+      const name = profile.nom || profile.name || profile.email || 'Compte propriétaire';
       const roleLabel = profile.role === 'vendeur' ? 'Vendeur' : 'Administrateur';
       const storeLabel = window.solmaPersonnelSession?.personnel?.magasin_nom;
       document.querySelector('#profile-name').textContent = name;
       document.querySelector('#profile-role').textContent = storeLabel ? `${roleLabel} · ${storeLabel}` : roleLabel;
-      document.querySelector('#top-avatar').textContent = name.split(/\s+/).map(part => part[0]).join('').slice(0, 2).toUpperCase();
+      const initials = name.split(/\s+/).map(part => part[0]).join('').slice(0, 2).toUpperCase();
+      document.querySelector('#top-avatar').textContent = initials;
+      document.querySelector('#profile-avatar').textContent = initials;
     }
     window.dispatchEvent(new CustomEvent('solma-auth-ready'));
   };

@@ -32,7 +32,12 @@ export default async function handler(request, response) {
   const { montant, motif, magasin_id } = request.body || {};
   const storeId = identity.magasinId || magasin_id;
   if (!Number.isInteger(montant) || montant <= 0 || !motif || !storeId) return response.status(400).json({ error: 'Invalid expense data' });
-  const payload = { montant, motif: motif.trim(), magasin_id: storeId, personnel_id: identity.personnelId || null, admin_id: identity.adminId || null };
+  let adminNom = null;
+  if (identity.adminId) {
+    const { data: adminUser } = await client.auth.admin.getUserById(identity.adminId);
+    adminNom = adminUser?.user?.user_metadata?.full_name || adminUser?.user?.email || 'Administrateur';
+  }
+  const payload = { montant, motif: motif.trim(), magasin_id: storeId, personnel_id: identity.personnelId || null, admin_id: identity.adminId || null, admin_nom: adminNom };
   const { data, error } = await client.from('depenses').insert(payload).select().single();
   if (error) return response.status(400).json({ error: error.message });
   return response.status(201).json({ expense: data });

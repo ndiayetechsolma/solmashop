@@ -21,10 +21,15 @@ export default async function handler(request, response) {
   const storeId = identity.magasinId || request.query.magasin_id || request.body?.magasin_id;
   if (!storeId) return response.status(400).json({ error: 'Store is required' });
   if (request.method === 'GET') {
+    if (request.query.history === 'true') {
+      const { data, error } = await client.from('caisses').select('*').eq('magasin_id', storeId).order('date_ouverture', { ascending: false }).limit(90);
+      if (error) return response.status(400).json({ error: error.message });
+      return response.status(200).json({ history: data });
+    }
     const { data, error } = await client.from('caisses').select('*').eq('magasin_id', storeId).order('date_ouverture', { ascending: false }).limit(1).maybeSingle();
     if (error) return response.status(400).json({ error: error.message });
     return response.status(200).json({ cash: data });
-  }
+}
   const { action, montant_ouverture, montant_fermeture } = request.body || {};
   if (action === 'open') {
     if ((!identity.personnelId && !identity.adminId) || !Number.isInteger(montant_ouverture) || montant_ouverture < 0) return response.status(400).json({ error: 'Invalid opening data' });
@@ -45,6 +50,14 @@ export default async function handler(request, response) {
     const { data, error } = await client.from('caisses').update({ montant_fermeture, ecart: montant_fermeture - expected, fermee_par: identity.personnelId || null, fermee_par_admin: identity.adminId || null, date_fermeture: new Date().toISOString() }).eq('id', cash.id).select().single();
     if (error) return response.status(400).json({ error: error.message });
     return response.status(200).json({ cash: data, expected });
+  }
+    if (action === 'reopen') {
+    if (!identity.personnelId && !identity.adminId) return response.status(403).json({ error: 'Not authorized' });
+    const { data: cash } = await client.from('caisses').select('*').eq('magasin_id', storeId).order('date_ouverture', { ascending: false }).limit(1).maybeSingle();
+    if (!cash || !cash.date_fermeture) return response.status(400).json({ error: 'No closed cash register to reopen' });
+    const { data, error } = await client.from('caisses').update({ montant_fermeture: null, ecart: null, date_fermeture: null }).eq('id', cash.id).select().single();
+    if (error) return response.status(400).json({ error: error.message });
+    return response.status(200).json({ cash: data });
   }
   return response.status(400).json({ error: 'Unknown cash action' });
 }
