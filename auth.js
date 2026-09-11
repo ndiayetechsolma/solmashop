@@ -43,8 +43,8 @@
       document.querySelector('#profile-name').textContent = name;
       document.querySelector('#profile-role').textContent = storeLabel ? `${roleLabel} · ${storeLabel}` : roleLabel;
       const initials = name.split(/\s+/).map(part => part[0]).join('').slice(0, 2).toUpperCase();
-      document.querySelector('#top-avatar').textContent = initials;
-      document.querySelector('#profile-avatar').textContent = initials;
+      const profileAvatarEl = document.querySelector('#profile-avatar');
+      if (profileAvatarEl) profileAvatarEl.textContent = initials;
     }
     window.dispatchEvent(new CustomEvent('solma-auth-ready'));
   };
