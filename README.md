@@ -1,54 +1,131 @@
 # Solma Shop Business
 
-Prototype web de gestion pour les magasins Solma Shop Business.
+## La plateforme de gestion commerciale pour les commerces multi-sites
 
-## Lancer localement
+Solma Shop Business est une application web de pilotage conçue pour les boutiques, supérettes, pharmacies, points de vente, franchises et petites ou moyennes chaînes commerciales. Elle aide chaque entreprise à suivre les ventes, les dépenses, les caisses, les produits et les équipes depuis un seul espace de travail.
 
-Pour tester uniquement l'interface, ouvrir `index.html` ou lancer un serveur statique. Pour les fonctions securisees (connexion personnel, creation vendeur, tresorerie), utiliser `npx vercel dev` : un serveur statique sur le port 4173 ne peut pas executer les fichiers du dossier `api/`.
+L’objectif est simple : donner au propriétaire une vision claire de son activité, tout en permettant aux équipes de vente de travailler rapidement et de manière structurée dans leur magasin.
 
-Avec Vercel Dev, ajouter les variables locales `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` et `PERSONNEL_SESSION_SECRET` dans les variables d'environnement demandees par Vercel. Ne jamais mettre la cle `service_role` dans `config.js`.
+## Pourquoi utiliser Solma Shop Business ?
 
-Le modele de variables est dans `.env.local.example`. La `SUPABASE_SERVICE_ROLE_KEY` se trouve dans Supabase, **Project Settings > API > Secret keys**. Elle doit etre ajoutee uniquement comme variable Vercel, jamais dans le code.
+La gestion d’un commerce repose souvent sur des cahiers, des messages WhatsApp et des calculs manuels. Cette méthode rend le suivi difficile : les écarts de caisse sont longs à analyser, les dépenses sont dispersées et le propriétaire n’a pas toujours une vue fiable de ses différents magasins.
 
-## Fonctionnalites du prototype
+Solma Shop Business permet de :
 
-- Tableau de bord des ventes, transactions, depenses et soldes de caisse
-- Filtre global par magasin
-- Historique des ventes et depenses
-- Ajout d'une vente, d'une depense, d'un produit et d'un membre du personnel
-- Ouverture et fermeture de caisse
-- Gestion des produits et du personnel
-- Rapports de synthese
-- Persistance locale avec `localStorage` pour les essais
-- Interface responsive desktop et mobile, avec style glassmorphism
+- Suivre les ventes par magasin, vendeur et moyen de paiement.
+- Enregistrer les dépenses immédiatement.
+- Comparer le montant attendu en caisse au montant réellement compté.
+- Centraliser le catalogue de produits et les équipes.
+- Consulter les performances d’un magasin ou de tout le réseau.
+- Prendre des décisions à partir de données fiables.
 
-## Passage en production
+## Pour quels types de commerce ?
 
-Cette version est une maquette fonctionnelle front-end. Elle ne doit pas encore etre utilisee pour des donnees reelles : les donnees sont locales et l'authentification n'est pas connectee.
+La solution est adaptée à toute activité qui réalise des ventes quotidiennes et manipule une caisse :
 
-Pour la version production, il faudra remplacer les fonctions de `app.js` par une API serveur et Supabase :
+- Boutiques de quartier et supérettes.
+- Magasins d’alimentation, de cosmétiques ou de vêtements.
+- Pharmacies et parapharmacies.
+- Restaurants rapides, boulangeries et points de restauration.
+- Commerces disposant de plusieurs agences ou magasins.
+- Franchises, réseaux de revendeurs et activités de distribution légère.
 
-1. Supabase Auth pour l'admin proprietaire.
-2. Une table `personnel` avec hash du PIN a 4 chiffres, jamais le PIN en clair.
-3. Une route serveur independante pour la connexion telephone + PIN du personnel et une session httpOnly.
-4. Des policies RLS et des fonctions serveur qui interdisent l'annulation ou la modification d'une vente par un vendeur.
-5. Les tables ventes, depenses, caisses, produits, magasins et les journaux d'audit.
+## Fonctionnalités métier
 
-La fonction serveur [api/sales.js](api/sales.js) est preparee pour Vercel. Ajouter dans les variables d'environnement Vercel `SUPABASE_URL` et `SUPABASE_SERVICE_ROLE_KEY`. La seconde est strictement secrete : elle ne doit jamais etre ajoutee dans `config.js`, dans le navigateur ou dans Git.
+### Tableau de bord décisionnel
 
-## Premiere etape Supabase
+Le tableau de bord présente les indicateurs essentiels de la journée : chiffre d’affaires, nombre de transactions, ventes en espèces, ventes Mobile Money, dépenses et montant attendu en caisse.
 
-Le script [supabase/schema.sql](supabase/schema.sql) contient la structure initiale et active la RLS. Dans Supabase, ouvrir **SQL Editor**, coller ce script et l'executer une fois. Il cree les magasins `Plateau` et `Médina` et bloque par defaut l'ecriture directe des ventes depuis le navigateur.
+### Enregistrement des ventes
 
-Pour activer le premier proprietaire, creer d'abord son utilisateur dans **Authentication > Users**, puis adapter et executer [supabase/bootstrap-admin.sql](supabase/bootstrap-admin.sql) avec son UUID et son email.
+Une vente peut être enregistrée avec le produit, le montant, le magasin et le moyen de paiement. Les ventes en espèces et les paiements Mobile Money sont séparés afin de faciliter le suivi des encaissements.
 
-Pour permettre aux admins d'ouvrir et fermer une caisse avec leur propre identite Auth, executer ensuite [supabase/migration-admin-cash.sql](supabase/migration-admin-cash.sql) dans le SQL Editor. Cette migration est necessaire si `schema.sql` avait deja ete execute auparavant.
+### Gestion de caisse
 
-Ne jamais mettre la `SUPABASE_SERVICE_ROLE_KEY` dans le code front-end. Elle sera utilisee uniquement par les fonctions serveur Vercel pour la connexion du personnel et l'enregistrement securise des ventes.
+Chaque point de vente peut ouvrir sa caisse avec un montant initial, suivre son solde théorique pendant la journée, puis clôturer la caisse avec le montant réellement compté. L’historique conserve les ouvertures, fermetures et écarts constatés.
 
-## Etat de verification
+### Suivi des dépenses
 
-- Vercel : projet `solma-shop-2`, production active, variables serveur presentes dans Development, Preview et Production.
-- Compatibilite : front-end JavaScript/CSS/HTML statique + fonctions serveur Node.js ESM, compatibles avec Vercel ; Supabase JS, bcryptjs et jose sont installes et `npm audit` ne signale aucune vulnerabilite.
-- Persistance : les operations metier passent par les routes Vercel et Supabase ; le chargement admin apres actualisation passe par `api/admin-data`.
-- GitHub : le depot Git local est initialise, mais aucun remote GitHub n'est encore configure et aucun push n'a ete effectue.
+Les équipes peuvent enregistrer les sorties d’argent liées à l’activité : transport, achat urgent, fournitures, petite monnaie ou autres charges.
+
+### Catalogue produits
+
+Le catalogue rassemble les produits et leurs prix de vente. Il accélère la création de ventes et limite les erreurs de saisie.
+
+### Gestion des équipes et des accès
+
+Les administrateurs gèrent les membres du personnel, leur magasin d’affectation et leur accès. Les vendeurs utilisent une connexion par téléphone et PIN ; les administrateurs disposent d’une connexion distincte.
+
+### Rapports et visibilité multi-magasins
+
+Les rapports permettent de consulter les ventes, les dépenses et les historiques de caisse. Le filtre par magasin aide un responsable à analyser un point de vente ou tout le réseau.
+
+## Rôles utilisateurs
+
+| Rôle | Utilisation principale |
+| --- | --- |
+| Administrateur / propriétaire | Consulte les données globales, gère les produits, le personnel, les magasins et les opérations de caisse. |
+| Vendeur | Enregistre les ventes et utilise les fonctions prévues pour son magasin. |
+
+## Parcours type d’une journée
+
+1. Le responsable ou le vendeur ouvre la caisse avec le fonds de départ.
+2. Les ventes sont enregistrées au fil de la journée.
+3. Les dépenses nécessaires sont ajoutées immédiatement.
+4. Le propriétaire consulte le tableau de bord ou les rapports.
+5. En fin de journée, la caisse est comptée et clôturée.
+
+## Architecture technique
+
+L’interface est développée en HTML, CSS et JavaScript natif afin de rester rapide, légère et adaptée aux ordinateurs comme aux mobiles.
+
+```text
+Navigateur
+  ├─ Interface web responsive
+  ├─ Supabase Auth pour les administrateurs
+  ├─ Client Supabase avec règles d’accès RLS
+  └─ Routes Vercel /api pour les opérations métier sensibles
+       └─ Base de données PostgreSQL Supabase
+```
+
+La solution utilise Supabase pour la base de données, l’authentification et la sécurité, ainsi que Vercel Functions pour les opérations serveur. Les PIN sont hashés avec `bcryptjs` et les sessions personnel utilisent des JWT sécurisés.
+
+## Tester le projet en local
+
+```bash
+git clone https://github.com/ndiayetechsolma/solmashop.git
+cd solmashop
+npm install
+```
+
+Copiez `config.example.js` en `config.js`, puis renseignez l’URL Supabase et la clé publique du projet.
+
+Ajoutez ensuite ces variables dans Vercel :
+
+```text
+SUPABASE_URL=https://votre-projet.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=votre-cle-secrete-service-role
+PERSONNEL_SESSION_SECRET=une-chaine-longue-aleatoire-et-secrete
+```
+
+Lancez le projet :
+
+```bash
+npx vercel dev
+```
+
+Puis ouvrez l’adresse affichée dans le terminal.
+
+## Vérification
+
+```bash
+npm run check
+```
+
+## Sécurité
+
+- Les PIN ne sont jamais stockés en clair.
+- Les sessions du personnel sont signées et expirent automatiquement.
+- Les opérations sensibles passent par des routes serveur.
+- Les tables Supabase utilisent Row Level Security.
+- Les clés secrètes ne doivent jamais être envoyées dans GitHub ou dans le navigateur.
