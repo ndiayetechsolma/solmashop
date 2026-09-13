@@ -25,7 +25,7 @@ button { cursor: pointer; }
 .seller-mode [data-cancel-sale] { display: none; }.loading-state { display: grid; gap: 8px; padding: 50px; text-align: center; }.loading-state strong { font: 700 15px Manrope, sans-serif; }.loading-state span { color: var(--muted); font-size: 11px; }
 .ambient { position: fixed; border-radius: 999px; pointer-events: none; filter: blur(90px); opacity: .55; }
 .ambient-one { width: 660px; height: 470px; background: var(--ambient-1); top: -220px; right: 5%; }
-.ambient-two { width: 760px; height: 750px; background: var(--ambient-2); bottom: -220px; left: 22%; opacity: .5; }
+.ambient-two { width: 760px; height: 750px; background: var(--ambient-2); bottom: -220px; left: 22%; opacity: .55; }
 .ambient-three { width: 500px; height: 500px; background: var(--ambient-3); top: -100px; left: 5%; opacity: .55; }
 .app-shell { display: flex; min-height: 100vh; position: relative; z-index: 1; }
 .sidebar{
