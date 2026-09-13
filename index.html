@@ -274,11 +274,22 @@
 
         <div class="topbar-actions">
 
-          <div class="store-selector">
+          <div class="store-selector" id="store-selector-custom">
 
             <span class="status-dot"></span>
 
-            <select id="store-filter">
+            <button type="button" class="store-selector-trigger" id="store-selector-trigger" aria-haspopup="listbox" aria-expanded="false">
+              <span id="store-selector-label">Tous les magasins</span>
+              <span class="store-selector-caret">▾</span>
+            </button>
+
+            <div class="store-selector-menu" id="store-selector-menu" role="listbox">
+              <button type="button" class="store-selector-option active" data-value="all" role="option">Tous les magasins</button>
+              <button type="button" class="store-selector-option" data-value="solma shop 1" role="option">Solma Shop 1</button>
+              <button type="button" class="store-selector-option" data-value="solma shop 2" role="option">Solma Shop 2</button>
+            </div>
+
+            <select id="store-filter" style="display:none">
 
               <option value="all">Tous les magasins</option>
               <option value="solma shop 1">Solma Shop 1</option>

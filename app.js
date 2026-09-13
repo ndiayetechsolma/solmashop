@@ -257,7 +257,7 @@ function collectionView() { return genericHeader('Collection', 'Catalogue dispon
 function teamView() { return genericHeader('Personnel', 'Les personnes autorisées à enregistrer des opérations.', 'new-team', 'Ajouter une personne') + `<section class="glass-card view-card"><div class="table-wrap"><table class="data-table"><thead><tr><th>Nom</th><th>Rôle</th><th>Téléphone</th><th>Magasin</th><th>Accès</th><th></th></tr></thead><tbody>${data.team.map(member => `<tr><td><div class="person"><span class="person-avatar">${member.initials}</span><strong>${escapeHtml(member.name)}</strong></div></td><td class="muted">${member.role}</td><td>${escapeHtml(member.phone)}</td><td class="muted">${member.store}</td><td><span class="badge badge-money">Actif</span></td><td><button class="text-link danger-link" data-deactivate-personnel="${member.id}">Désactiver</button></td></tr>`).join('')}</tbody></table></div></section>`; }
 function reportsView() {
   const sales = getFiltered(data.sales).filter(sale => !sale.cancelled);
-  const expenses = getFiltered(data.expenses);
+  const expenses = getFiltered(data.expenses).filter(expense => !expense.cancelled);
   const dayKey = value => new Date(value).toISOString().slice(0, 10);
   const days = {};
   sales.forEach(sale => { const key = dayKey(sale.timestamp); days[key] = days[key] || { sales: 0, expenses: 0 }; days[key].sales += sale.amount; });
@@ -481,32 +481,34 @@ if (sidebarToggle) {
   openCashModal(button.dataset.action === 'open-cash' ? 'open' : 'close', cash?.id || store?.id, button.dataset.store);
 }, true);
 document.querySelectorAll('.nav-item').forEach(item => item.addEventListener('click', () => { currentView = item.dataset.view; document.querySelector('#sidebar').classList.remove('open'); document.querySelector('#sidebar-backdrop').classList.remove('show'); render(); if ((currentView === 'cash' || currentView === 'reports') && !Object.keys(cashHistoryByStore).length) loadCashHistory(); }));document.querySelector('#store-filter').addEventListener('change', render);
-const mobileMenuBtn = document.querySelector('#mobile-menu');
-const sidebar = document.querySelector('#sidebar');
-const backdrop = document.querySelector('#sidebar-backdrop');
 
-const collapsed = localStorage.getItem('solma-sidebar-collapsed') === '1';
-sidebar.classList.toggle('collapsed', collapsed);
+const storeSelectorTrigger = document.querySelector('#store-selector-trigger');
+const storeSelectorMenu = document.querySelector('#store-selector-menu');
+const storeSelectorLabel = document.querySelector('#store-selector-label');
+const storeFilterHidden = document.querySelector('#store-filter');
 
-mobileMenuBtn.addEventListener('click', () => {
-
-  if (window.innerWidth <= 720) {
-    sidebar.classList.toggle('open');
-    backdrop.classList.toggle('show');
-    return;
-  }
-
-  sidebar.classList.toggle('collapsed');
-
-  localStorage.setItem(
-    'solma-sidebar-collapsed',
-    sidebar.classList.contains('collapsed') ? '1' : '0'
-  );
-});
-document.querySelector('#sidebar-backdrop').addEventListener('click', () => {
-  document.querySelector('#sidebar').classList.remove('open');
-  document.querySelector('#sidebar-backdrop').classList.remove('show');
-});
+if (storeSelectorTrigger) {
+  storeSelectorTrigger.addEventListener('click', () => {
+    const isOpen = storeSelectorMenu.classList.toggle('open');
+    storeSelectorTrigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  });
+  storeSelectorMenu.querySelectorAll('.store-selector-option').forEach(option => {
+    option.addEventListener('click', () => {
+      storeFilterHidden.value = option.dataset.value;
+      storeSelectorLabel.textContent = option.textContent;
+      storeSelectorMenu.querySelectorAll('.store-selector-option').forEach(o => o.classList.toggle('active', o === option));
+      storeSelectorMenu.classList.remove('open');
+      storeSelectorTrigger.setAttribute('aria-expanded', 'false');
+      storeFilterHidden.dispatchEvent(new Event('change'));
+    });
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#store-selector-custom')) {
+      storeSelectorMenu.classList.remove('open');
+      storeSelectorTrigger.setAttribute('aria-expanded', 'false');
+    }
+  });
+}
 
 render();
 window.addEventListener('solma-auth-ready', () => {
