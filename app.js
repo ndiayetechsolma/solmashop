@@ -182,7 +182,10 @@ function buildTrendSvg(salesForChart) {
   const areaPath = `${linePath} L${width} 200 L0 200Z`;
   const lastPoint = points[points.length - 1];
   const axisLabels = points.map(point => `<text class="axis-label" x="${point.x.toFixed(1)}" y="216">${point.label}</text>`).join('');
-  return `<svg class="chart" viewBox="0 0 700 220" preserveAspectRatio="none"><defs><linearGradient id="area" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#80bca0" stop-opacity=".30"/><stop offset="1" stop-color="#80bca0" stop-opacity="0"/></linearGradient></defs><line class="chart-grid" x1="0" y1="30" x2="700" y2="30"/><line class="chart-grid" x1="0" y1="87" x2="700" y2="87"/><line class="chart-grid" x1="0" y1="144" x2="700" y2="144"/><path class="chart-area" d="${areaPath}"/><path class="chart-line" d="${linePath}"/><circle class="chart-dot" cx="${lastPoint.x.toFixed(1)}" cy="${lastPoint.y.toFixed(1)}" r="5"/>${axisLabels}</svg>`;
+  const shortMoney = v => v >= 1000 ? `${Math.round(v / 1000)}k` : `${Math.round(v)}`;
+  const yTicks = [30, 87, 144].map(y => ({ y, value: maxValue * (1 - (y - topY) / (bottomY - topY)) }));
+  const yAxisLabels = yTicks.map(tick => `<text class="axis-label" x="696" y="${(tick.y - 5).toFixed(1)}" text-anchor="end">${shortMoney(tick.value)}</text>`).join('');
+  return `<svg class="chart" viewBox="0 0 700 220" preserveAspectRatio="none"><defs><linearGradient id="area" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#80bca0" stop-opacity=".30"/><stop offset="1" stop-color="#80bca0" stop-opacity="0"/></linearGradient></defs><line class="chart-grid" x1="0" y1="30" x2="700" y2="30"/><line class="chart-grid" x1="0" y1="87" x2="700" y2="87"/><line class="chart-grid" x1="0" y1="144" x2="700" y2="144"/><path class="chart-area" d="${areaPath}"/><path class="chart-line" d="${linePath}"/><circle class="chart-dot" cx="${lastPoint.x.toFixed(1)}" cy="${lastPoint.y.toFixed(1)}" r="5"/>${axisLabels}${yAxisLabels}</svg>`;
 }
 
 function dashboardView() {

@@ -683,6 +683,27 @@ html, body { overflow-x: hidden; }
   .store-selector{
     padding:0 10px;
   }
+    .mobile-menu{
+    top:35px;
+    left:14px;
+    width:36px;
+    height:36px;
+  }
+
+  .topbar{
+    left:auto;
+    right:14px;
+    transform:none;
+    width:calc(100vw - 64px);
+  }
+
+  .store-selector-trigger{
+    font-size:9px;
+  }
+
+  .store-selector-caret{
+    font-size:7px;
+  }
 }
   .topbar-brand .brand-text{
     display:none;
