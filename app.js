@@ -510,6 +510,33 @@ if (storeSelectorTrigger) {
   });
 }
 
+const mobileMenuBtn = document.querySelector('#mobile-menu');
+const sidebar = document.querySelector('#sidebar');
+const backdrop = document.querySelector('#sidebar-backdrop');
+
+const collapsed = localStorage.getItem('solma-sidebar-collapsed') === '1';
+sidebar.classList.toggle('collapsed', collapsed);
+
+mobileMenuBtn.addEventListener('click', () => {
+
+  if (window.innerWidth <= 720) {
+    sidebar.classList.toggle('open');
+    backdrop.classList.toggle('show');
+    return;
+  }
+
+  sidebar.classList.toggle('collapsed');
+
+  localStorage.setItem(
+    'solma-sidebar-collapsed',
+    sidebar.classList.contains('collapsed') ? '1' : '0'
+  );
+});
+document.querySelector('#sidebar-backdrop').addEventListener('click', () => {
+  document.querySelector('#sidebar').classList.remove('open');
+  document.querySelector('#sidebar-backdrop').classList.remove('show');
+});
+
 render();
 window.addEventListener('solma-auth-ready', () => {
   if (window.solmaPersonnelSession?.token) {
