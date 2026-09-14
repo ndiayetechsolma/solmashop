@@ -44,10 +44,10 @@ export default async function handler(request, response) {
     const since = cash.date_ouverture;
     const [{ data: sales }, { data: expenses }] = await Promise.all([
       client.from('ventes').select('montant').eq('magasin_id', storeId).eq('mode_paiement', 'liquide').eq('annulee', false).gte('date_heure', since),
-      client.from('depenses').select('montant').eq('magasin_id', storeId).gte('date_heure', since)
+      client.from('depenses').select('montant').eq('magasin_id', storeId).eq('annulee', false).gte('date_heure', since)
     ]);
     const expected = cash.montant_ouverture + (sales || []).reduce((sum, row) => sum + row.montant, 0) - (expenses || []).reduce((sum, row) => sum + row.montant, 0);
-    const { data, error } = await client.from('caisses').update({ montant_fermeture, ecart: montant_fermeture - expected, fermee_par: identity.personnelId || null, fermee_par_admin: identity.adminId || null, date_fermeture: new Date().toISOString() }).eq('id', cash.id).select().single();
+    const { data, error } = await client.from('caisses').update({ montant_fermeture, ecart: montant_fermeture - expected, solde_theorique: expected, fermee_par: identity.personnelId || null, fermee_par_admin: identity.adminId || null, date_fermeture: new Date().toISOString() }).eq('id', cash.id).select().single();
     if (error) return response.status(400).json({ error: error.message });
     return response.status(200).json({ cash: data, expected });
   }

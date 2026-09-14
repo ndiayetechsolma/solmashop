@@ -44,17 +44,20 @@ export default async function handler(request, response) {
     store: storeName, time: toTime(item.date_heure)
   }));
   const expensesList = (allExpensesResult.data || []).map(item => ({
-    id: item.id, timestamp: item.date_heure, reason: item.motif, amount: item.montant,
+    id: item.id, timestamp: item.date_heure, cancelled: item.annulee, reason: item.motif, amount: item.montant,
     addedBy: item.personnel?.nom || 'Personnel', store: storeName, time: toTime(item.date_heure)
   }));
 
   const todaySales = salesList.filter(sale => !sale.cancelled && isToday(sale.timestamp));
-  const todayExpenses = expensesList.filter(expense => isToday(expense.timestamp));
+  const todayExpenses = expensesList.filter(expense => !expense.cancelled && isToday(expense.timestamp));
   const cashSales = todaySales.filter(sale => sale.payment === 'liquide').reduce((total, sale) => total + sale.amount, 0);
   const mobileSales = todaySales.filter(sale => sale.payment === 'mobile_money').reduce((total, sale) => total + sale.amount, 0);
   const expensesTotal = todayExpenses.reduce((total, expense) => total + expense.amount, 0);
   const cash = cashResult.data;
-  const expected = cash ? cash.montant_ouverture + cashSales - expensesTotal : 0;
+  const since = cash?.date_ouverture ? new Date(cash.date_ouverture) : null;
+  const cashSalesSinceOpening = since ? salesList.filter(sale => !sale.cancelled && sale.payment === 'liquide' && new Date(sale.timestamp) >= since).reduce((total, sale) => total + sale.amount, 0) : 0;
+  const expensesSinceOpening = since ? expensesList.filter(expense => !expense.cancelled && new Date(expense.timestamp) >= since).reduce((total, expense) => total + expense.amount, 0) : 0;
+  const expected = cash ? cash.montant_ouverture + cashSalesSinceOpening - expensesSinceOpening : 0;
 
   return response.status(200).json({
     store: storeName,
