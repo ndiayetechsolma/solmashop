@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.solmashop.business",
+    "sha256_cert_fingerprints": ["07:20:CF:53:D1:F7:3D:FE:1D:48:68:5B:2C:38:55:BB:EC:E7:39:14:B2:03:12:0D:94:E1:09:B9:B6:C8:70:E6"]
+  }
+}]

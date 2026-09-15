@@ -6,3 +6,8 @@ node_modules/
 .vercel
 .env*
 .env.local
+# Artefacts build Android (TWA)
+*.apk
+*.aab
+*.keystore
+icon-512.png
